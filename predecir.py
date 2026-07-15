@@ -1,3 +1,4 @@
+# Predice el resultado y marcador de un partido con heatmap de probabilidades
 import pandas as pd
 import numpy as np
 import tensorflow as tf
