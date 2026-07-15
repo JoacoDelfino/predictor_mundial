@@ -90,7 +90,8 @@ def calcular_features(equipo, rival, fecha):
     }
 
 # Filtrar solo partidos de mundiales y construir el dataset
-df_wc = df[(df['tournament'] == 'FIFA World Cup') & (df['date'] >= '1990-01-01')].copy()
+torneos_competitivos = ['FIFA World Cup', 'Copa América', 'UEFA Euro', 'African Cup of Nations', 'AFC Asian Cup']
+df_wc = df[df['tournament'].isin(torneos_competitivos)].copy()
 
 rows = []
 for _, partido in df_wc.iterrows():
