@@ -79,7 +79,8 @@ def calcular_features(equipo, rival, fecha):
 
 df_wc = df[df['tournament'] == 'FIFA World Cup'].copy()
 
-# ── MODELO 1: clasificacion 
+# ── MODELO 1: Clasificación (quien gana)
+ 
 rows = []
 for _, partido in df_wc.iterrows():
     home = partido['home_team']
@@ -147,7 +148,8 @@ loss_test, acc_test = modelo.evaluate(x_testNorm, y_test, verbose=0)
 print(f"Train - Loss: {loss_train:.4f} - Accuracy: {acc_train*100:.1f}%")
 print(f"Test  - Loss: {loss_test:.4f} - Accuracy: {acc_test*100:.1f}%")
 
-# ── MODELO 2: regresion ß
+# ── MODELO 2: Marcador de goles
+
 rows_goles = []
 for _, partido in df_wc.iterrows():
     home = partido['home_team']
@@ -188,7 +190,7 @@ modelo_goles = tf.keras.Sequential([
     tf.keras.layers.Dense(32, activation='relu'),
     tf.keras.layers.Dense(2)
 ])
-modelo_goles.compile(loss='mse', optimizer=Adam(0.001))
+modelo_goles.compile(loss='mean_squared_error', optimizer=Adam(0.001))
 modelo_goles.fit(norm_goles(x_train_g), y_train_g, epochs=100, verbose=0)
 modelo_goles.save('modelo_goles.h5')
 
