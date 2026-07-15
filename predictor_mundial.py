@@ -1,3 +1,4 @@
+# Entrena dos modelos: clasificacion (gana/empate/pierde) y regresion (marcador exacto)
 import pandas as pd
 import numpy as np
 import tensorflow as tf
