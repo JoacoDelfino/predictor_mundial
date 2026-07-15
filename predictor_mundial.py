@@ -3,74 +3,32 @@ import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+from tensorflow.keras.losses import SparseCategoricalCrossentropy
+from tensorflow.keras.optimizers import Adam
 
 # Cargar los datos de entrenamiento
 df = pd.read_csv('results.csv')
 df['date'] = pd.to_datetime(df['date'])
 
 # Filtrar los datos de entrenamiento sin el mundial de 2026
-df_train = df[df['date'] < '2026-06-01']
+df = df[df['date'] < '2026-06-01'].copy()
 
 ranking_fifa = {
-    'France': 1,
-    'Spain': 2,
-    'Argentina': 3,
-    'England': 4,
-    'Portugal': 5,
-    'Brazil': 6,
-    'Netherlands': 7,
-    'Morocco': 8,
-    'Belgium': 9,
-    'Germany': 10,
-    'Croatia': 11,
-    'Colombia': 13,
-    'Senegal': 14,
-    'Mexico': 15,
-    'United States': 16,
-    'Uruguay': 17,
-    'Japan': 18,
-    'Switzerland': 19,
-    'Iran': 21,
-    'Turkey': 22,
-    'Ecuador': 23,
-    'Austria': 24,
-    'South Korea': 25,
-    'Australia': 27,
-    'Egypt': 28,
-    'Algeria': 29,
-    'Canada': 30,
-    'Norway': 31,
-    'Panama': 33,
-    'Ivory Coast': 34,
-    'Sweden': 38,
-    'Paraguay': 40,
-    'Czech Republic': 41,
-    'Scotland': 43,
-    'Tunisia': 44,
-    'DR Congo': 46,
-    'Uzbekistan': 50,
-    'Qatar': 55,
-    'Iraq': 57,
-    'South Africa': 60,
-    'Saudi Arabia': 61,
-    'Jordan': 63,
-    'Bosnia and Herzegovina': 65,
-    'Cape Verde': 69,
-    'Ghana': 74,
-    'Curacao': 82,
-    'Haiti': 83,
-    'New Zealand': 85,
+    'France': 1, 'Spain': 2, 'Argentina': 3, 'England': 4, 'Portugal': 5,
+    'Brazil': 6, 'Netherlands': 7, 'Morocco': 8, 'Belgium': 9, 'Germany': 10,
+    'Croatia': 11, 'Colombia': 13, 'Senegal': 14, 'Mexico': 15, 'United States': 16,
+    'Uruguay': 17, 'Japan': 18, 'Switzerland': 19, 'Iran': 21, 'Turkey': 22,
+    'Ecuador': 23, 'Austria': 24, 'South Korea': 25, 'Australia': 27, 'Egypt': 28,
+    'Algeria': 29, 'Canada': 30, 'Norway': 31, 'Panama': 33, 'Ivory Coast': 34,
+    'Sweden': 38, 'Paraguay': 40, 'Czech Republic': 41, 'Scotland': 43, 'Tunisia': 44,
+    'DR Congo': 46, 'Uzbekistan': 50, 'Qatar': 55, 'Iraq': 57, 'South Africa': 60,
+    'Saudi Arabia': 61, 'Jordan': 63, 'Bosnia and Herzegovina': 65, 'Cape Verde': 69,
+    'Ghana': 74, 'Curacao': 82, 'Haiti': 83, 'New Zealand': 85,
 }
 
 mundiales_ganados = {
-    'Brazil': 5,
-    'Germany': 4,
-    'Italy': 4,
-    'Argentina': 3,
-    'France': 2,
-    'Uruguay': 2,
-    'England': 1,
-    'Spain': 1,
+    'Brazil': 5, 'Germany': 4, 'Italy': 4, 'Argentina': 3,
+    'France': 2, 'Uruguay': 2, 'England': 1, 'Spain': 1,
 }
 
 # Devuelve los últimos n partidos de un equipo antes de una fecha dada
@@ -83,7 +41,6 @@ def get_ultimos_partidos(equipo, fecha, n=10):
 
 # Calcula win rate, goles y head-to-head de un equipo contra un rival antes de una fecha
 def calcular_features(equipo, rival, fecha):
-    
     partidos = get_ultimos_partidos(equipo, fecha)
     
     wins = 0
@@ -107,7 +64,6 @@ def calcular_features(equipo, rival, fecha):
     avg_goles_favor = goles_favor / n if n > 0 else 0
     avg_goles_contra = goles_contra / n if n > 0 else 0
     
-    # Head to head contra el rival específico
     h2h = df[
         ((df['home_team'] == equipo) & (df['away_team'] == rival)) |
         ((df['home_team'] == rival) & (df['away_team'] == equipo))
@@ -132,3 +88,79 @@ def calcular_features(equipo, rival, fecha):
         'mundiales': mundiales_ganados.get(equipo, 0),
     }
 
+# Filtrar solo partidos de mundiales y construir el dataset
+df_wc = df[df['tournament'] == 'FIFA World Cup'].copy()
+
+rows = []
+for _, partido in df_wc.iterrows():
+    home = partido['home_team']
+    away = partido['away_team']
+    fecha = partido['date']
+    
+    feat_home = calcular_features(home, away, fecha)
+    feat_away = calcular_features(away, home, fecha)
+    
+    if partido['home_score'] > partido['away_score']:
+        resultado = 1
+    elif partido['home_score'] < partido['away_score']:
+        resultado = -1
+    else:
+        resultado = 0
+    
+    row = {
+        'home_win_rate': feat_home['win_rate'],
+        'home_avg_goles_favor': feat_home['avg_goles_favor'],
+        'home_avg_goles_contra': feat_home['avg_goles_contra'],
+        'home_h2h_win_rate': feat_home['h2h_win_rate'],
+        'home_ranking_fifa': feat_home['ranking_fifa'],
+        'home_mundiales': feat_home['mundiales'],
+        'away_win_rate': feat_away['win_rate'],
+        'away_avg_goles_favor': feat_away['avg_goles_favor'],
+        'away_avg_goles_contra': feat_away['avg_goles_contra'],
+        'away_h2h_win_rate': feat_away['h2h_win_rate'],
+        'away_ranking_fifa': feat_away['ranking_fifa'],
+        'away_mundiales': feat_away['mundiales'],
+        'neutral': 1 if partido['neutral'] else 0,
+        'resultado': resultado
+    }
+    rows.append(row)
+
+df_model = pd.DataFrame(rows)
+
+X = df_model.drop('resultado', axis=1).values
+Y = df_model['resultado'].values
+
+x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+# Convierte numeros a enteros para el SparseCategoricalCrossentropy
+le = LabelEncoder()
+le.fit(Y)
+
+
+y_train = le.transform(y_train)
+y_test = le.transform(y_test)
+
+normalizador = tf.keras.layers.Normalization(axis=-1)
+normalizador.adapt(x_train)
+x_trainNorm = normalizador(x_train)
+x_testNorm = normalizador(x_test)
+
+modelo = tf.keras.Sequential([
+    tf.keras.layers.Dense(units=64, activation='relu'),
+    tf.keras.layers.Dense(units=32, activation='relu'),
+    tf.keras.layers.Dense(units=3, activation='linear')
+])
+
+modelo.compile(
+    loss=SparseCategoricalCrossentropy(from_logits=True),
+    optimizer=Adam(learning_rate=0.001),
+    metrics=['accuracy']
+)
+
+modelo.fit(x_trainNorm, y_train, epochs=100, verbose=0)
+
+loss_train, acc_train = modelo.evaluate(x_trainNorm, y_train, verbose=0)
+loss_test, acc_test = modelo.evaluate(x_testNorm, y_test, verbose=0)
+
+print(f"Train - Loss: {loss_train:.4f} - Accuracy: {acc_train*100:.1f}%")
+print(f"Test  - Loss: {loss_test:.4f} - Accuracy: {acc_test*100:.1f}%")
