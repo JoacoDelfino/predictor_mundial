@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.losses import SparseCategoricalCrossentropy
@@ -89,7 +90,7 @@ def calcular_features(equipo, rival, fecha):
     }
 
 # Filtrar solo partidos de mundiales y construir el dataset
-df_wc = df[df['tournament'] == 'FIFA World Cup'].copy()
+df_wc = df[(df['tournament'] == 'FIFA World Cup') & (df['date'] >= '1990-01-01')].copy()
 
 rows = []
 for _, partido in df_wc.iterrows():
@@ -147,7 +148,9 @@ x_testNorm = normalizador(x_test)
 
 modelo = tf.keras.Sequential([
     tf.keras.layers.Dense(units=64, activation='relu'),
+    tf.keras.layers.Dropout(0.3),
     tf.keras.layers.Dense(units=32, activation='relu'),
+    tf.keras.layers.Dropout(0.3),
     tf.keras.layers.Dense(units=3, activation='linear')
 ])
 
@@ -159,8 +162,18 @@ modelo.compile(
 
 modelo.fit(x_trainNorm, y_train, epochs=100, verbose=0)
 
+modelo.save('modelo_mundial.h5')
+
+with open('normalizador.pkl', 'wb') as f:
+    pickle.dump(normalizador, f)
+
+with open('label_encoder.pkl', 'wb') as f:
+    pickle.dump(le, f)
+
 loss_train, acc_train = modelo.evaluate(x_trainNorm, y_train, verbose=0)
 loss_test, acc_test = modelo.evaluate(x_testNorm, y_test, verbose=0)
 
+
 print(f"Train - Loss: {loss_train:.4f} - Accuracy: {acc_train*100:.1f}%")
 print(f"Test  - Loss: {loss_test:.4f} - Accuracy: {acc_test*100:.1f}%")
+
