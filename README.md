@@ -1,6 +1,6 @@
 # Predictor Mundial 2026 ⚽
 
-Proyecto de Machine Learning para predecir resultados de partidos del Mundial de Fútbol 2026. Usa redes neuronales entrenadas con historial de partidos internacionales para predecir quién gana y el marcador más probable.
+Proyecto de Machine Learning para predecir resultados de partidos del Mundial de Fútbol 2026. Usa redes neuronales entrenadas con historial de partidos internacionales para predecir quién gana, el marcador más probable, y simular el torneo completo.
 
 ## ¿Qué hace?
 
@@ -9,15 +9,13 @@ Dado dos selecciones, el modelo predice:
 - Marcador más probable
 - Heatmap con la probabilidad de cada marcador exacto (0-0 hasta 5-5)
 
+También simula el Mundial completo 300 veces desde fase de grupos hasta la final, y devuelve la probabilidad de ser campeón de cada selección.
+
 ## Dataset
 
 Se usa el dataset [International Football Results 1872-2024](https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017) de Kaggle, que incluye más de 49.000 partidos internacionales con resultado, fecha, sede y torneo.
 
-Archivos del dataset:
-- `results.csv` — resultados de todos los partidos (el más importante)
-- `shootouts.csv` — resultados de penales
-- `goalscorers.csv` — goleadores
-- `former_names.csv` — nombres históricos de selecciones
+Solo se usa `results.csv` para el entrenamiento.
 
 ## Features usadas
 
@@ -49,7 +47,7 @@ Loss: SparseCategoricalCrossentropy
 Accuracy en test: ~55-58%
 
 ### Modelo 2 — Regresión (marcador)
-Red neuronal que predice los goles de cada equipo. Los goles esperados se usan como parámetro lambda de una distribución de Poisson para generar el heatmap de marcadores.
+Red neuronal que predice los goles de cada equipo. Los goles esperados se usan como parámetro lambda de una distribución de Poisson para generar el heatmap de marcadores y agregar aleatoriedad en la simulación.
 
 Arquitectura:
 ```
@@ -61,8 +59,9 @@ Loss: Mean Squared Error
 
 ```
 Predictor Mundial/
-├── predictor_mundial.py   # entrena y guarda los modelos
-├── predecir.py            # carga los modelos y hace predicciones
+├── modelos.py             # entrena y guarda los modelos
+├── predecir.py            # predice un partido con heatmap
+├── predecir_mundial.py    # simula el mundial completo 300 veces
 ├── results.csv            # dataset principal
 ├── modelo_mundial.h5      # modelo de clasificación guardado
 ├── modelo_goles.h5        # modelo de regresión guardado
@@ -80,22 +79,29 @@ pip3 install pandas numpy tensorflow scikit-learn matplotlib seaborn scipy
 
 ### 2. Entrenar los modelos
 ```bash
-python3 predictor_mundial.py
+python3 modelos.py
 ```
-Esto entrena ambos modelos y los guarda en disco. Solo hay que correrlo una vez.
+Entrena ambos modelos y los guarda en disco. Solo hay que correrlo una vez.
 
-### 3. Hacer predicciones
+### 3. Predecir un partido
 ```bash
 python3 predecir.py
 ```
-Modificá la última línea del archivo para elegir los equipos:
+Modificá la última línea para elegir los equipos:
 ```python
 predecir_partido('Argentina', 'England')
 predecir_partido('Spain', 'France')
 ```
 
+### 4. Simular el mundial completo
+```bash
+python3 predecir_mundial.py
+```
+Corre 300 simulaciones del torneo completo y muestra la probabilidad de ser campeón de cada selección.
+
 ## Ejemplo de output
 
+**Predicción de partido:**
 ```
 ── Argentina vs England ──
 Gana England: 35.2%
@@ -104,14 +110,27 @@ Gana Argentina: 38.2%
 Marcador más probable: Argentina 1 - 1 England
 ```
 
-Además se genera un archivo `heatmap.png` con la probabilidad de cada marcador exacto.
+**Simulación del mundial:**
+```
+🏆 PROBABILIDAD DE SER CAMPEÓN DEL MUNDO 🏆
+----------------------------------------
+Argentina: 18.3%
+France: 15.7%
+Spain: 14.2%
+Brazil: 12.0%
+...
+```
+
+## Desempate en eliminatorias
+
+Cuando hay empate en tiempo reglamentario, se simulan 30 minutos de tiempo extra con Poisson y lambda reducido basado en el win rate de cada equipo. Si sigue empatado, se resuelve por penales donde la probabilidad de ganar es proporcional al win rate histórico.
 
 ## Limitaciones
 
-- El modelo tiene ~55% de accuracy en test 
-- El ranking FIFA es estático (previo al Mundial de 2026)
+- El modelo tiene ~55% de accuracy en test — el fútbol es inherentemente difícil de predecir
+- El ranking FIFA es estático (snapshot previo al Mundial 2026)
 - No considera lesiones, bajas ni estado físico de los jugadores
-- Solo se entrena con partidos de Copa del Mundo, no con toda la historia de cada selección
+- Solo se entrena con partidos de Copa del Mundo
 
 ## Tecnologías
 
