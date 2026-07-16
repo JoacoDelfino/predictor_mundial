@@ -60,7 +60,7 @@ Loss: Mean Squared Error
 ```
 Predictor Mundial/
 ├── modelos.py             # entrena y guarda los modelos
-├── predecir.py            # predice un partido con heatmap
+├── predecir_partido.py    # predice un partido con heatmap
 ├── predecir_mundial.py    # simula el mundial completo 300 veces
 ├── results.csv            # dataset principal
 ├── modelo_mundial.h5      # modelo de clasificación guardado
