@@ -9,7 +9,7 @@ Dado dos selecciones, el modelo predice:
 - Marcador más probable
 - Heatmap con la probabilidad de cada marcador exacto (0-0 hasta 5-5)
 
-También simula el Mundial completo 300 veces desde fase de grupos hasta la final, y devuelve la probabilidad de ser campeón de cada selección.
+También simula el Mundial completo N veces desde fase de grupos hasta la final, y devuelve la probabilidad de ser campeón de cada selección.
 
 ## Dataset
 
@@ -97,7 +97,7 @@ predecir_partido('Spain', 'France')
 ```bash
 python3 predecir_mundial.py
 ```
-Corre 300 simulaciones del torneo completo y muestra la probabilidad de ser campeón de cada selección.
+Corre N simulaciones del torneo completo y muestra la probabilidad de ser campeón de cada selección.
 
 ## Ejemplo de output
 
@@ -127,7 +127,7 @@ Cuando hay empate en tiempo reglamentario, se simulan 30 minutos de tiempo extra
 
 ## Limitaciones
 
-- El modelo tiene ~55% de accuracy en test — el fútbol es inherentemente difícil de predecir
+- El modelo tiene ~55% de accuracy en test 
 - El ranking FIFA es estático (snapshot previo al Mundial 2026)
 - No considera lesiones, bajas ni estado físico de los jugadores
 - Solo se entrena con partidos de Copa del Mundo
