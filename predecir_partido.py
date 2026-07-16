@@ -138,7 +138,7 @@ def predecir_partido(equipo1, equipo2, fecha='2026-07-15'):
         for j in range(max_goles + 1):
             matriz[i][j] = poisson.pmf(i, lambda1) * poisson.pmf(j, lambda2)
 
-    matriz = matriz / matriz.sum() * 100  ß
+    matriz = matriz / matriz.sum() * 100
 
     plt.figure(figsize=(8, 6))
     sns.heatmap(matriz, annot=True, fmt='.1f', cmap='YlOrRd',
@@ -151,4 +151,4 @@ def predecir_partido(equipo1, equipo2, fecha='2026-07-15'):
     plt.savefig('heatmap.png')
     plt.show()
 
-predecir_partido('Argentina', 'England')
+predecir_partido('Argentina', 'Spain')
