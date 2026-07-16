@@ -122,7 +122,7 @@ def simular_partido(equipo1, equipo2, fecha='2026-06-15'):
     goles2 = np.random.poisson(lambda2)
     return goles1, goles2
 
-# En eliminatorias si hay empate simula tiempo extra y penales con win rate
+# En eliminatorias si hay empate simula tiempo extra y penales con win rate de cada uno 
 def resolver_empate(equipo1, equipo2, g1, g2):
     fecha = pd.Timestamp('2026-06-15')
     feat1 = calcular_features(equipo1, equipo2, fecha)
@@ -207,15 +207,15 @@ def simular_mundial_una_vez():
     final = simular_ronda([(sf[0], sf[1])])
     return final[0]
 
-N = 300
+# Simula Mundial 2026 complet N veces y cálcula la probabilidad de cada equipo de ser campeón
+N = 50
 campeones = Counter()
 
-print("Simulando 300 mundiales...")
 for i in range(N):
     campeon = simular_mundial_una_vez()
     campeones[campeon] += 1
     if (i + 1) % 50 == 0:
-        print(f"  {i+1}/300 simulaciones completadas")
+        print(f"  {i+1/N:.2%} simulaciones completadas")
 
 print("\n🏆 PROBABILIDAD DE SER CAMPEÓN DEL MUNDO 🏆")
 print("-" * 40)
